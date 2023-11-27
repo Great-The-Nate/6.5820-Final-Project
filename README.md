@@ -1,50 +1,8 @@
 # 6.5820 Final Project
 
-Follow these instructions to get a private copy of this repository:
-1. Clone the repository using SSH (you might need to [generate](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) and [add](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account) public key of your machine to your git):
+# ABR Algorithms
 
-2. Remove the .git directory in the cloned folder
-```
-cd final-project-6.5820
-rm -rf .git
-```
-
-3. Make your own PRIVATE git repository on MIT github
-4. Add the cloned repository on your own private repo you just created:
-```
-git init
-git add -A
-git commit -m "first commit"
-git branch -M main 
-git remote add origin <your repo url>
-git push -u origin main 
-``` 
-
-# Designing ABR Algorithms
-
-## Introduction
-
-After her successful stint at Massive Internet Transfers, Alyssa P. Hacker was hired as
-CTO of Multinational Internet Television, a company that streams on-demand TV
-shows to users. The company is facing a critical problem: users on cellular
-connections have a terrible streaming experience: their video is either too low
-quality or they rebuffer too often.
-As her first hire, you've been tasked with implementing an ABR scheme to
-maximize the Quality of Experience for users on cellular connections.
-
-For this part of the assignment, you will be writing ABR (adaptive bitrate) algorithms.
-We've provided you with an ABR environment that can deterministically simulate a
-video player and report the QoE values achieved by your ABR algorithm.
-Using simulation instead of using a real testbed has the following major advantages:
-
-- *Determinism*: Every run is deterministic. There can be no noise introduced by
-various system components (e.g. network, browser, video player). 
-- *Ease of debugging*: The whole setup is in Python, and there is no third-party software to look into.
-- *Speed*: Simulation for ABR is at least a couple of orders of magnitude faster
- than performing the experiments on a realistic setup. This is a major benefit,
-especially if you would like to quickly evaluate an algorithm on multiple set of traces.
-
-### System description
+## Description
 
 In a realistic ABR setting, a client (typically a mobile device) is streaming video from a web server on a
 bandwidth-limited network link (typically a cellular link). The ABR algorithm runs on the client end and
@@ -56,18 +14,9 @@ poor perceptual video quality. On the other hand, if it always fetches chunks of
 might cause too much buffering when the network bandwidth is low. So, a good ABR algorithm
 has to *adapt* to the current network conditions.
 
-In this pset, we ask you to implement a simple function that takes as input the video metadata,
-QoE objective function, and information about the network conditions to decide the
-bitrate to fetch for the next chunk.
-
-We provide code to simulate the cellular link, video playback logic and other components to evaluate your ABR algorithm.
-
 ## Setup
 
 ### Installation
-
-For this lab, you will need python3 installed on your computer. macOS by default comes with python3; for Windows users, we recommand that you 
-to install [Anaconda](https://www.anaconda.com/products/distribution#Downloads) for convenience. 
 
 You'll need the following packages. Feel free to install using your favorite method (e.g., conda, pip3, ...)
 ```
@@ -79,7 +28,7 @@ matplotlib
 
 ### Video
 
-You will be streaming [Big Buck Bunny](https://www.youtube.com/watch?v=aqz-KE-bpKQ) with your ABR algorithm.
+We will be streaming [Big Buck Bunny](https://www.youtube.com/watch?v=aqz-KE-bpKQ).
 Since we're using simulation, you won't be able to see the video play in real-time.
 
 This video is encoded in the following bitrates (in Kbps):
@@ -112,10 +61,7 @@ mkdir -p network/traces/scaled_traces
 python3 network/scale_trace.py --trace-in network/traces/cellular/Verizon1.dat --trace-out /tmp/test.txt --target-mbps=2
 ```
 
-### Your task
-
-You only need to modify `your_code/abr.py`, the class that implements your ABR algorithm.
-
+### Video, Objective, and QOE
 This class is instantiated with the ABR server and has access to both a `Video` and `Objective` object. The `Video` gives you
 information about the available bitrates of the video and chunk sizes for all video chunks. The `Objective` is your interface to the
 Quality of Experience (QoE) metric you'll use to judge how "good" your algorithm is. Recall that the QoE for the first chunk
@@ -189,16 +135,3 @@ python3 scripts/plt_cdf.py --runs batch_eval_1 batch_eval_2
 
 If this was successful, you will see the plot in the file `cdfs/batch_eval_1_batch_eval_2/*.png`
 For example, CDFs comparing robust-mpc, buffer-based and rate-based schemes on hsdpa train dataset is in [figures/hsdpa.png](figures/hsdpa.png).
-
-## Submission
-
-You should submit a PDF file that contains the write up for the entire problem set (problems 1 and 2). As in previous problem sets, you should include a **link to your repo** and the hash of the last commit. Please ensure that the usernames "arashne" and "mingrany" are added as collaborators.
-
-The write up is the most important factor in grading of this problem.
-A large portion of the grade is assigned to the design and the choice of the algorithm that you've used.
-Please indicate your rationale that went into your ABR algorithm. Include a brief report of all the ideas that you've tried.
-Include results from an evaluation done locally on a set of relevant traces of your choosing. Include CDFs that compare your approach against buffer-based approach on the given set of traces.
-How did your evaluation guide you to come up with better ideas for ABR? What worked and what didn't?
-Detail which parts of your algorithm are novel and which are similar to already existing algorithms covered in the class or that you're familiar with.
-
-
