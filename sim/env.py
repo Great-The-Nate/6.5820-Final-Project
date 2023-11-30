@@ -49,6 +49,7 @@ class Env:
     assert act < len(self.vid.get_bitrates())
 
   def step(self, quality):
+    """The primary step function simulating video streaming."""
 
     self._validate_action(quality)
 

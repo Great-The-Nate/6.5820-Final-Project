@@ -16,7 +16,13 @@ class WrapAroundException(Exception):
 
 class Network:
 
-  def __init__(self, mm_fname, mm_start_idx=-1):
+  def __init__(self, mm_fname: str, mm_start_idx=-1):
+    """Initializes the network.
+
+    Args:
+        mm_fname: The filename of the Mahimahi trace.
+        mm_start_idx: Start index of the trace. Defaults to -1.
+    """
     l = []
     with open(mm_fname, 'r') as f:
       for line in f.read().splitlines():
@@ -24,14 +30,34 @@ class Network:
 
     self.trace_fname = mm_fname
     self.l = list(l)
+    """The times to wait before being able to send an MTU-sized packet (ms).
+    
+    For every `i`, we must wait `l[i]` milliseconds before being able to send
+    the `i`th packet of Maximum Transmission Unit size (MTU, 1500 bytes). 
+    """
+    
     self.l2 = list(l)
+    """The raw timestamp values.
+    
+    From Pensieve (https://github.com/hongzimao/pensieve/issues/124):
+    
+    Each line gives a timestamp in milliseconds (from the beginning of the
+    trace) and represents an opportunity for one 1500-byte packet to be drained
+    from the bottleneck queue and cross the link. If more than one MTU-sized
+    packet can be transmitted in a particular millisecond, the same timestamp is
+    repeated on multiple lines.
+    """
+    
     self.trace_dur_sec = max(self.l2) / KILO
-
+    """The total trace duration in seconds."""
+    
     for i in range(1, len(l)):
       self.l[i] = l[i] - l[i - 1]
       assert self.l[i] >= 0
 
     self.idx = mm_start_idx
+    """The current index of the trace."""
+    
     self.shift_t = 0
 
   # get time to download in seconds
