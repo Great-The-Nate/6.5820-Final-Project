@@ -145,3 +145,16 @@ class Env:
         f.write(ret)
 
     return ret
+
+class CustomEnv(Env):
+  """Custom environment that enables prefetching future trunks"""
+  
+  def __init__(self, vid, obj, net):
+    # Initialize the fetched_chunks and fetched_quality attributes
+    self.fetched_chunks = []
+    self.fetched_quality = []
+    super().__init__(vid, obj, net)
+
+  def step(self, quality, prefetch_chunks=[], prefetch_quality=[]):
+    # TODO: Define a custom step method that supports prefetching and calculates the qoe, or extract the qoe out of the step function.
+    super().step(quality)
