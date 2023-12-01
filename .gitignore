@@ -4,3 +4,5 @@ __pycache__
 mpc/*
 bb/*
 .DS_Store
+real/data/*.y4m
+real/data/tmp/
