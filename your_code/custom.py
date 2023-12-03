@@ -17,8 +17,10 @@ class CustomAlg:
     self._past_n_throughput_vals = self.args.past_n_throughput_vals
 
 
-  def next_transmit(self, chunk_index, rebuffer_sec, download_rate_kbps,
-             buffer_sec) -> (list, list):
+  # NOTE from Nate: Switched output from (list, list) to just a tuple of the two bitrates to download 
+  # for the next chunk. We can change this in the future though.
+  def next_quality(self, chunk_index, rebuffer_sec, download_rate_kbps,
+             buffer_sec) -> (int, int): 
     """
     Estimates the current network conditions and determines the optimal chunks and their respective bitrates 
     for transmission in the next step of streaming.
@@ -40,4 +42,4 @@ class CustomAlg:
       download_rate_kbps = None
       buffer_sec = 0
     """
-    return [], []
+    return 0, 1

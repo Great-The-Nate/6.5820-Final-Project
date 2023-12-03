@@ -48,17 +48,31 @@ class Env:
     assert act >= 0
     assert act < len(self.vid.get_bitrates())
 
-  def step(self, quality):
+  def step(self, qualities):
     """The primary step function simulating video streaming."""
+    lowerQual, higherQual = min(qualities), max(qualities)
+    self._validate_action(lowerQual)
+    self._validate_action(higherQual)
 
-    self._validate_action(quality)
+    # Try downloading smaller bitrate first, if there's leftover time go for larger bitrate too
+    smaller_chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, lowerQual)  # in Mb
+    smaller_chunk_size_bytes = smaller_chunk_size * MEGA / BITS_IN_BYTE
 
-    chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx,
-                                                 quality)  # in Mb
+    larger_chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, higherQual)  # in Mb
+    larger_chunk_size_bytes = larger_chunk_size * MEGA / BITS_IN_BYTE
+    
+    ttd_smaller, next_net_idx = self.net.ttd(smaller_chunk_size_bytes)
+    ttd_larger, _ = self.net.ttd(larger_chunk_size_bytes)
 
-    chunk_size_bytes = chunk_size * MEGA / BITS_IN_BYTE
-
-    ttd = self.net.ttd(chunk_size_bytes)
+    if ttd_smaller + ttd_larger < self.CHUNK_DUR:
+      ttd = ttd_smaller + ttd_larger
+      chunk_size_bytes = smaller_chunk_size_bytes + larger_chunk_size_bytes
+      quality = higherQual
+    else:
+      ttd = ttd_smaller
+      chunk_size_bytes = smaller_chunk_size_bytes
+      quality = lowerQual
+      self.net.set_packet_idx(next_net_idx)
 
     if ttd == 0:
       # because of the nature of mahimahi simulation sometime we can have
@@ -71,10 +85,10 @@ class Env:
     else:
       download_rate_kbps = chunk_size_bytes / ttd * BITS_IN_BYTE / KILO
 
-    rebuf_sec = max(0, ttd - self.buffer)
-
-    self.buffer = max(0, self.buffer - ttd)
-    self.buffer += self.CHUNK_DUR
+    rebuf_sec = max(0, ttd - self.CHUNK_DUR)
+    self.buffer = self.CHUNK_DUR
+    # self.buffer = max(0, self.buffer - ttd)
+    # self.buffer += self.CHUNK_DUR
 
     if self.vid_chunk_idx == 0:
       qoe_qual, rp, sp, qoe = self.obj.detailed_qoe_first_chunk(
@@ -145,16 +159,4 @@ class Env:
         f.write(ret)
 
     return ret
-
-class CustomEnv(Env):
-  """Custom environment that enables prefetching future trunks"""
   
-  def __init__(self, vid, obj, net):
-    # Initialize the fetched_chunks and fetched_quality attributes
-    self.fetched_chunks = []
-    self.fetched_quality = []
-    super().__init__(vid, obj, net)
-
-  def step(self, quality, prefetch_chunks=[], prefetch_quality=[]):
-    # TODO: Define a custom step method that supports prefetching and calculates the qoe, or extract the qoe out of the step function.
-    super().step(quality)

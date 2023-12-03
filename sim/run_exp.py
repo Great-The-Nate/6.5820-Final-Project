@@ -108,21 +108,8 @@ def main(argv):
     obj_client = copy.deepcopy(obj)
     vid_client = copy.deepcopy(vid)
 
-    if args.instructor_mpc:
-        from mpc.mpc import AbrAlg
-
-        abr_alg_fn = AbrAlg
-    elif args.instructor_bb:
-        from bb.bb import AbrAlg
-
-        abr_alg_fn = AbrAlg
-    elif args.rb:
-        from your_code.rb import AbrAlg
-
-        abr_alg_fn = AbrAlg
-    else:
-        abr_alg_fn = abr.AbrAlg
-
+    from your_code import custom
+    abr_alg_fn = custom.CustomAlg
     abr_alg = abr_alg_fn(vid_client, obj_client, remaining_args)
 
     total_rebuf_sec = 0
@@ -140,9 +127,9 @@ def main(argv):
             "buffer_sec": buff,
         }
 
-        quality = abr_alg.next_quality(**feedback)
-
-        ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.step(quality)
+        bitrateQualities = abr_alg.next_quality(**feedback)
+        
+        ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.step(bitrateQualities)
 
         buff = env.get_buffer_size()
 

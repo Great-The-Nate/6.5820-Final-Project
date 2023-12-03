@@ -62,22 +62,22 @@ class Network:
 
   # get time to download in seconds
   # input: # bytes to download
-  def old_ttd(self, n_bytes):
-    time_ms = 0
-    bytes_accum = 0
-    if self.idx is -1:
-      self.idx = 0
+  # def old_ttd(self, n_bytes):
+  #   time_ms = 0
+  #   bytes_accum = 0
+  #   if self.idx is -1:
+  #     self.idx = 0
 
-    while bytes_accum < n_bytes:
-      bytes_accum += MTU
-      time_ms += self.l[self.idx]
+  #   while bytes_accum < n_bytes:
+  #     bytes_accum += MTU
+  #     time_ms += self.l[self.idx]
 
-      self.idx = (self.idx + 1) % len(self.l)
+  #     self.idx = (self.idx + 1) % len(self.l)
 
-    return time_ms * MILLI
+  #   return time_ms * MILLI
 
   def ttd(self, n_bytes):
-    # returns in seconds
+    # Returns time to download in seconds and the next index the network would've been at
     N = len(self.l)
     n_packets = int(math.ceil(n_bytes / MTU))
 
@@ -95,7 +95,10 @@ class Network:
     self.idx = idx_jump
     self.shift_t = 0
 
-    return time_ms * MILLI
+    return time_ms * MILLI, self.idx
+  
+  def set_packet_idx(self, index):
+    self.idx = index
 
   # lookahead_time in sec
   # return Mbps
