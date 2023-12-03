@@ -51,7 +51,7 @@ for element in "${chunk_sizes_files[@]}"; do
     echo "$element"
 done
 
-printf "%s\n" "${segment_time}" > "$output_file"
+printf "size %s\nbitrates " "${segment_time}" > "$output_file"
 printf "%s\t" "${bitrates[@]}" >> "$output_file"
 printf "\n" >> "$output_file"
 paste -d '\t' "${chunk_sizes_files[@]}" >> "$output_file"
