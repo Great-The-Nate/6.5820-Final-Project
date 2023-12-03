@@ -48,7 +48,8 @@ parser.add_argument("--mm-trace",
                     help="Mahimahi link trace to use")
 parser.add_argument('--mm-start-idx', type=int, default=0)
 parser.add_argument('--results-dir', type=str, required=True)
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format="[%(name)s:%(lineno)d] %(levelname)s - %(message)s")
+logging.info("Loaded arguments for single experiment run")
 
 
 def parse_args(argv):

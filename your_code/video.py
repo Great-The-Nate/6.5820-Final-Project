@@ -4,6 +4,9 @@ Loads in the video data from the video trace file.
 
 import os, math
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 BITS_IN_A_BYTE = 8.0
 KILO = 1000.0
@@ -18,6 +21,8 @@ MILLISEC_IN_SEC = 1000.0
 # required.
 class Video(object):
     def __init__(self, video_trace):
+        logger.info("=========CREATING VIDEO OBJECT=========")
+        logger.info(f"Loaded video trace data from file: {video_trace}")
         if not os.path.exists(video_trace):
             raise Exception("Video trace does not exist")
         f = open(video_trace)
@@ -27,6 +32,7 @@ class Video(object):
         self.bitrates = [
             float(x.replace("k", "")) for x in f.readline().strip().split()[1:]
         ]
+        logger.info(f"Got bitrates {self.bitrates}")
         # Make sure this list is sorted in ascending order.
         assert sorted(self.bitrates) == self.bitrates
         self.chunks = []
@@ -37,6 +43,8 @@ class Video(object):
             self.chunks.append([8.0 * b / 1000.0 / 1000.0 for b in sorted(brs)])
 
         self.max_video_chunks = len(self.chunks)
+        logger.info(f"Chunks loaded from file, got {self.max_video_chunks} chunks in the video")
+        logger.info("=========VIDEO OBJECT CREATED=========")
 
     # Scales the video length up or down by 'repeat_factor'. The video will
     # return valid chunk sizes drawn from the trace in a loop until this length
