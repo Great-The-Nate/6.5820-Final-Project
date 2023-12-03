@@ -8,7 +8,7 @@ segment_time=4
 
 mkdir "$tmp_dir"
 
-bitrates=("44k" "86k" "125k" "173k" "212k" "564k" "985" "1178k" "1439k")
+bitrates=("44k" "86k" "125k" "173k" "212k" "564k" "985k" "1178k" "1439k")
 
 # Look at var stream map in ffmpeg
 
@@ -51,4 +51,7 @@ for element in "${chunk_sizes_files[@]}"; do
     echo "$element"
 done
 
-paste -d '\t' "${chunk_sizes_files[@]}" > real/data/videos/video.dat
+printf "%s\n" "${segment_time}" > "$output_file"
+printf "%s\t" "${bitrates[@]}" >> "$output_file"
+printf "\n" >> "$output_file"
+paste -d '\t' "${chunk_sizes_files[@]}" >> "$output_file"
