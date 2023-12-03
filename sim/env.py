@@ -61,8 +61,9 @@ class Env:
     larger_chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, higherQual)  # in Mb
     larger_chunk_size_bytes = larger_chunk_size * MEGA / BITS_IN_BYTE
     
-    ttd_smaller, next_net_idx = self.net.ttd(smaller_chunk_size_bytes)
-    ttd_larger, _ = self.net.ttd(larger_chunk_size_bytes)
+    prior_net_idx = self.net.idx
+    ttd_smaller = self.net.ttd(smaller_chunk_size_bytes)
+    ttd_larger = self.net.ttd(larger_chunk_size_bytes)
 
     if ttd_smaller + ttd_larger < self.CHUNK_DUR:
       ttd = ttd_smaller + ttd_larger
@@ -72,7 +73,6 @@ class Env:
       ttd = ttd_smaller
       chunk_size_bytes = smaller_chunk_size_bytes
       quality = lowerQual
-      self.net.set_packet_idx(next_net_idx)
 
     if ttd == 0:
       # because of the nature of mahimahi simulation sometime we can have
@@ -86,9 +86,11 @@ class Env:
       download_rate_kbps = chunk_size_bytes / ttd * BITS_IN_BYTE / KILO
 
     rebuf_sec = max(0, ttd - self.CHUNK_DUR)
+    if not rebuf_sec:
+      # Fast forward network to the time of next chunk download
+      self.net.set_packet_idx(prior_net_idx)
+      self.net.bytes_downloadable(self.CHUNK_DUR)
     self.buffer = self.CHUNK_DUR
-    # self.buffer = max(0, self.buffer - ttd)
-    # self.buffer += self.CHUNK_DUR
 
     if self.vid_chunk_idx == 0:
       qoe_qual, rp, sp, qoe = self.obj.detailed_qoe_first_chunk(

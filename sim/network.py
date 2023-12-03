@@ -77,7 +77,7 @@ class Network:
   #   return time_ms * MILLI
 
   def ttd(self, n_bytes):
-    # Returns time to download in seconds and the next index the network would've been at
+    # Returns time to download in seconds
     N = len(self.l)
     n_packets = int(math.ceil(n_bytes / MTU))
 
@@ -95,7 +95,7 @@ class Network:
     self.idx = idx_jump
     self.shift_t = 0
 
-    return time_ms * MILLI, self.idx
+    return time_ms * MILLI
   
   def set_packet_idx(self, index):
     self.idx = index
