@@ -30,13 +30,15 @@ class ChunkStats:
 
 class Env:
 
-  def __init__(self, vid, obj, net):
+  def __init__(self, vid, obj, net, live_delay):
     self.vid = copy.deepcopy(vid)
     self.obj = copy.deepcopy(obj)
     self.n_bitrates = vid.num_bitrates()
     self.CHUNK_DUR = vid.get_chunk_duration()
     self.net = net
     self.buffer = 0  # seconds
+    self.live_delay = live_delay + self.CHUNK_DUR
+    self.availableSeconds = live_delay + self.CHUNK_DUR # Number of seconds the server has ready to send
 
     self.vid_chunk_idx = 0
     self.total_qoe = 0
@@ -50,6 +52,7 @@ class Env:
 
   def step(self, qualities):
     """The primary step function simulating video streaming."""
+    # print(f"Live Delay: {self.live_delay}; Available Seconds: {self.availableSeconds}; Buffer: {self.buffer}")
     lowerQual, higherQual = min(qualities), max(qualities)
     self._validate_action(lowerQual)
     self._validate_action(higherQual)
@@ -65,14 +68,21 @@ class Env:
     ttd_smaller = self.net.ttd(smaller_chunk_size_bytes)
     ttd_larger = self.net.ttd(larger_chunk_size_bytes)
 
+    # Decide to use smaller or larger bitrate based on if the larger bitrate downloads in time
+    # And set/reset network index accordingly
+    self.net.set_packet_idx(prior_net_idx)
     if ttd_smaller + ttd_larger < self.CHUNK_DUR:
       ttd = ttd_smaller + ttd_larger
       chunk_size_bytes = smaller_chunk_size_bytes + larger_chunk_size_bytes
       quality = higherQual
+      self.net.bytes_downloadable(ttd)
     else:
       ttd = ttd_smaller
       chunk_size_bytes = smaller_chunk_size_bytes
       quality = lowerQual
+      self.net.bytes_downloadable(
+        max(ttd, self.CHUNK_DUR)# If we chose smaller bitrate, we still tried to download the larger one
+      ) 
 
     if ttd == 0:
       # because of the nature of mahimahi simulation sometime we can have
@@ -85,12 +95,20 @@ class Env:
     else:
       download_rate_kbps = chunk_size_bytes / ttd * BITS_IN_BYTE / KILO
 
-    rebuf_sec = max(0, ttd - self.CHUNK_DUR)
-    if not rebuf_sec:
-      # Fast forward network to the time of next chunk download
-      self.net.set_packet_idx(prior_net_idx)
-      self.net.bytes_downloadable(self.CHUNK_DUR)
-    self.buffer = self.CHUNK_DUR
+    # print("TTD:", ttd)
+    rebuf_sec = max(0, ttd - self.buffer)
+    self.live_delay += rebuf_sec
+    self.availableSeconds += ttd - self.CHUNK_DUR
+    
+    self.buffer = max(0, self.buffer - ttd)
+    self.buffer += self.CHUNK_DUR
+
+    # Fast forward environment to the next time a chunk is available
+    if self.availableSeconds < self.CHUNK_DUR:
+      self.net.bytes_downloadable(self.CHUNK_DUR - self.availableSeconds)
+      self.buffer -= (self.CHUNK_DUR - self.availableSeconds)
+      self.availableSeconds = self.CHUNK_DUR
+    
 
     if self.vid_chunk_idx == 0:
       qoe_qual, rp, sp, qoe = self.obj.detailed_qoe_first_chunk(

@@ -61,7 +61,20 @@ parser.add_argument(
     "--mm-trace", type=str, required=True, help="Mahimahi link trace to use"
 )
 parser.add_argument("--mm-start-idx", type=int, default=0)
-parser.add_argument("--results-dir", type=str, required=True)
+parser.add_argument(
+    "--results-dir", 
+    type=str,  
+    default=os.path.join(os.getcwd(), "../results")
+)
+parser.add_argument(
+    "--live-delay",
+    type=int,
+    default=0,
+    help="The delay in seconds that the client is behind the broadcaster beyond the delay implied by \
+        the chunk size (e.g. for a fully live stream with 4 second chunks there is a implied minimum \
+        delay of 4 seconds but live-delay would be 0)."
+)
+
 
 logging.set_verbosity(logging.INFO)
 logging.get_absl_handler().setFormatter(
@@ -100,11 +113,10 @@ def main(argv):
     for br, pq in zip(vid.get_bitrates(), pqs):
         pq_dict[br] = pq
 
-    obj = objective.Objective(
-        pq_dict, args.startup_penalty, args.rebuffer_penalty, args.smooth_penalty
-    )
+    obj = objective.Objective(pq_dict, args.startup_penalty, args.rebuffer_penalty, args.smooth_penalty)
     net = network.Network(args.mm_trace, args.mm_start_idx)
-    env = Env(vid, obj, net)
+    env = Env(vid, obj, net, args.live_delay)
+
     obj_client = copy.deepcopy(obj)
     vid_client = copy.deepcopy(vid)
 
