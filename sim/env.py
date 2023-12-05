@@ -30,15 +30,15 @@ class ChunkStats:
 
 class Env:
 
-  def __init__(self, vid, obj, net, live_delay):
+  def __init__(self, vid, obj, net, cmdline_args):
     self.vid = copy.deepcopy(vid)
     self.obj = copy.deepcopy(obj)
     self.n_bitrates = vid.num_bitrates()
     self.CHUNK_DUR = vid.get_chunk_duration()
     self.net = net
     self.buffer = 0  # seconds
-    self.live_delay = live_delay + self.CHUNK_DUR
-    self.availableSeconds = live_delay + self.CHUNK_DUR # Number of seconds the server has ready to send
+    self.live_delay = cmdline_args.live_delay + self.CHUNK_DUR
+    self.availableSeconds = cmdline_args.live_delay + self.CHUNK_DUR # Number of seconds the server has ready to send
 
     self.vid_chunk_idx = 0
     self.total_qoe = 0
@@ -53,6 +53,8 @@ class Env:
   def step(self, qualities):
     """The primary step function simulating video streaming."""
     # print(f"Live Delay: {self.live_delay}; Available Seconds: {self.availableSeconds}; Buffer: {self.buffer}")
+    # print("Qualities:", qualities)
+
     lowerQual, higherQual = min(qualities), max(qualities)
     self._validate_action(lowerQual)
     self._validate_action(higherQual)

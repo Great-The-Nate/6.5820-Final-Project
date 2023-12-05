@@ -17,6 +17,7 @@ parser.add_argument('--seed', type=int, default=42)
 parser.add_argument('-n', '--name', type=str, required=True)
 parser.add_argument('--results_dir', type=str, default='results/')
 parser.add_argument('--dry_run', action='store_true')
+parser.add_argument('--live-delay', type=int, default=0)
 
 parser.add_argument('--bba', action='store_true')
 parser.add_argument('--bola', action='store_true')
@@ -75,7 +76,7 @@ def cmd_gen(trace, start_index, results_dir):
     additional_args += ' --bola'
   elif args.tb:
     additional_args += ' --tb'
-  return 'python3 sim/run_exp.py -- --mm-trace=%s --results-dir=%s --mm-start-idx=%d %s -- %s' % (
+  return 'python3 sim/run_exp.py -- --mm-trace=%s --results-dir=%s --mm-start-idx=%d %s %s' % (
       trace, results_dir, start_index, additional_args,
       ' '.join(remaining_args))
 

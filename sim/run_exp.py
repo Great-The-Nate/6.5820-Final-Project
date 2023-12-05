@@ -4,8 +4,6 @@ import json
 import os
 import sys
 
-import numpy as np
-
 sys.path.append("./")
 from your_code import abr, objective, video
 from absl import app, logging
@@ -75,13 +73,6 @@ parser.add_argument(
         delay of 4 seconds but live-delay would be 0)."
 )
 
-
-logging.set_verbosity(logging.INFO)
-logging.get_absl_handler().setFormatter(
-    CustomPythonFormatter(fmt="[%(name)s:%(lineno)d] %(levelname)s - %(message)s")
-)
-logging.info("Loaded arguments for single experiment run")
-
 # use buffer based algorithm: BBA0
 parser.add_argument('--bba', action='store_true')
 # use buffer based algorithm: BOLA
@@ -90,9 +81,13 @@ parser.add_argument('--bola', action='store_true')
 parser.add_argument('--tb', action='store_true')
 # use retransmission algorithm
 parser.add_argument('--rt', action='store_true')
-# INSTRUCTOR ONLY ARGS
-parser.add_argument("--instructor-mpc", action="store_true")
-parser.add_argument("--instructor-bb", action="store_true")
+
+
+logging.set_verbosity(logging.INFO)
+logging.get_absl_handler().setFormatter(
+    CustomPythonFormatter(fmt="[%(name)s:%(lineno)d] %(levelname)s - %(message)s")
+)
+logging.info("Loaded arguments for single experiment run")
 
 
 def parse_args(argv):
@@ -106,7 +101,7 @@ def parse_args(argv):
 
 
 def main(argv):
-    args, remaining_args = parse_args(argv[1:])
+    args, _ = parse_args(argv[1:])
     vid = video.Video(args.video)
 
     if args.max_chunks is not None:
@@ -122,7 +117,7 @@ def main(argv):
 
     obj = objective.Objective(pq_dict, args.startup_penalty, args.rebuffer_penalty, args.smooth_penalty)
     net = network.Network(args.mm_trace, args.mm_start_idx)
-    env = Env(vid, obj, net, args.live_delay)
+    env = Env(vid, obj, net, args)
 
     obj_client = copy.deepcopy(obj)
     vid_client = copy.deepcopy(vid)
@@ -140,7 +135,7 @@ def main(argv):
     elif args.rt:
         from your_code.rt import AbrAlg
         abr_alg_fn = AbrAlg
-    abr_alg = abr_alg_fn(vid_client, obj_client, remaining_args)
+    abr_alg = abr_alg_fn(vid_client, obj_client, args)
 
     total_rebuf_sec = 0
     rebuf_sec = None
