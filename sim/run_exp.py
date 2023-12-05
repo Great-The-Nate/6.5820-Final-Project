@@ -82,7 +82,14 @@ logging.get_absl_handler().setFormatter(
 )
 logging.info("Loaded arguments for single experiment run")
 
-parser.add_argument("--rb", action="store_true")
+# use buffer based algorithm: BBA0
+parser.add_argument('--bba', action='store_true')
+# use buffer based algorithm: BOLA
+parser.add_argument('--bola', action='store_true')
+# use throughput algorithm
+parser.add_argument('--tb', action='store_true')
+# use retransmission algorithm
+parser.add_argument('--rt', action='store_true')
 # INSTRUCTOR ONLY ARGS
 parser.add_argument("--instructor-mpc", action="store_true")
 parser.add_argument("--instructor-bb", action="store_true")
@@ -119,9 +126,20 @@ def main(argv):
 
     obj_client = copy.deepcopy(obj)
     vid_client = copy.deepcopy(vid)
-
-    from your_code import custom
-    abr_alg_fn = custom.CustomAlg
+    
+    # Updated to use differnt algorithms by adding flags
+    if args.bba:
+        from your_code.bba import AbrAlg
+        abr_alg_fn = AbrAlg
+    if args.bola:
+        from your_code.bola import AbrAlg
+        abr_alg_fn = AbrAlg
+    elif args.tb:
+        from your_code.tb import AbrAlg
+        abr_alg_fn = AbrAlg
+    elif args.rt:
+        from your_code.rt import AbrAlg
+        abr_alg_fn = AbrAlg
     abr_alg = abr_alg_fn(vid_client, obj_client, remaining_args)
 
     total_rebuf_sec = 0

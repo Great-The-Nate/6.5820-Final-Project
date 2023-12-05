@@ -18,7 +18,10 @@ parser.add_argument('-n', '--name', type=str, required=True)
 parser.add_argument('--results_dir', type=str, default='results/')
 parser.add_argument('--dry_run', action='store_true')
 
-parser.add_argument('--rb', action='store_true')
+parser.add_argument('--bba', action='store_true')
+parser.add_argument('--bola', action='store_true')
+parser.add_argument('--tb', action='store_true')
+parser.add_argument('--target_thr', type=float, default=0.0)
 # INSTRUCTOR ONLY ARGS
 parser.add_argument('--instructor-mpc', action='store_true')
 parser.add_argument('--instructor-bb', action='store_true')
@@ -66,7 +69,13 @@ def cmd_gen(trace, start_index, results_dir):
     additional_args += ' --instructor-mpc'
   elif args.instructor_bb:
     additional_args += ' --instructor-bb'
-  return 'python sim/run_exp.py -- --mm-trace=%s --results-dir=%s --mm-start-idx=%d %s -- %s' % (
+  elif args.bba:
+    additional_args += ' --bba'
+  elif args.bola:
+    additional_args += ' --bola'
+  elif args.tb:
+    additional_args += ' --tb'
+  return 'python3 sim/run_exp.py -- --mm-trace=%s --results-dir=%s --mm-start-idx=%d %s -- %s' % (
       trace, results_dir, start_index, additional_args,
       ' '.join(remaining_args))
 
@@ -95,7 +104,10 @@ def main():
     traces = traces[:n_runs]
 
     # rescale the throughputs.
-    sample_throughputs = np.random.uniform(.3, 4, n_runs)
+    if args.target_thr == 0.0:
+      sample_throughputs = np.random.uniform(.3, 4, n_runs)
+    else:
+      sample_throughputs = [args.target_thr] * n_runs
     rescaled_traces = []
     os.system('mkdir -p /tmp/rescaled_traces/%s/' % mode)
     for trace, thr in zip(traces, sample_throughputs):

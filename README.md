@@ -1,5 +1,12 @@
 # 6.5820 Final Project
 
+## Dev Commands
+There are currently three ABR algorithms implemented in `your_code/bba.py`, `your_code/bola.py`, and `your_code/tb.py`
+
+To run the batched mode experiment using rescaled 1Mbps hsdpa traces with bba, run `python3 scripts/run_exps.py --name=avg_1Mbps_abr --trace_set=hsdpa --n_train_runs=8 --n_test_runs=8 --results_dir=results/ --bba  --target_thr=1.0`
+
+If you want to run bola or tb, replace `--bba` with `--bola` or `--tb` respectively.
+
 # ABR Algorithms
 
 ## Description
