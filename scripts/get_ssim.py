@@ -10,7 +10,7 @@ import cv2
 
 ROOT_INPUT_DIR = os.path.join("real", "data", "tmp")
 INPUT_VIDEO = os.path.join("real", "data", "clutch-livestream-moment.mp4")
-SAMPLE_FREQ = 200  # Save every Nth frame
+SAMPLE_FREQ = 50  # Save every Nth frame
 ORIGINAL_CLIPS_PATH = os.path.join(ROOT_INPUT_DIR, "original")
 ORIGINAL_FRAMES_PATH = os.path.join(ORIGINAL_CLIPS_PATH, "frames")
 os.makedirs(ORIGINAL_FRAMES_PATH, exist_ok=True)
