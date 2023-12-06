@@ -13,7 +13,7 @@ output_file=real/data/videos/livestream/video.dat
 tmp_dir=real/data/tmp
 segment_time=4
 
-# bitrates=("3844k")
+# bitrates=("44k")
 bitrates=("44k" "86k" "125k" "173k" "212k" "249k" "315k" "369k" "497k" "564k" "764k" "985k" "1178k" "1439k" "2038k" "2353k" "2875k" "3529k" "3844k")
 
 mkdir "$tmp_dir"
@@ -40,39 +40,31 @@ split_original_video () {
 # split it up into segments, similar as in step 1. Afterwords, calculate the
 # size of each segment/chunk and save it to a file.
 get_chunk_sizes () {
-    echo "Getting chunk sizes for each bitrate..."
+    local bitrate=$1
 
-    # Iterate through the array using indices and values
-    for bitrate in "${bitrates[@]}"; do
-        encoded_video="${tmp_dir}/br-${bitrate}/encoded_${bitrate}.mp4"
-        segment_file="${tmp_dir}/br-${bitrate}/chunk_%03d.mp4"
+    echo "Getting chunk sizes for bitrate ${bitrate}..."
 
-        mkdir "${tmp_dir}/br-${bitrate}"
+    mkdir "${tmp_dir}/br-${bitrate}"
 
+    segment_file="${tmp_dir}/br-${bitrate}/chunk_%03d.mp4"
+    segment_sizes_file="${tmp_dir}/br-${bitrate}/${bitrate}_segment_sizes.txt"
+    rm $segment_sizes_file
 
-        if [ -e "$encoded_video" ]; then
-            echo "Encoded file exists already. Skipping to split phase..."
-        else
-            echo "File does not exist. Encoding at bitrate ${bitrate}..."
-            # Encode the video
-            ffmpeg -i "$input_file" -c:v libx264 -b:v "$bitrate" "$encoded_video"
-        fi
-
+    if [ -e "$segment_Sizes_file" ]; then
+        echo "Segment sizes file exists already. Skipping to split phase..."
+    else
+        echo "File does not exist. Encoding at bitrate ${bitrate}..."
         # Split the encoded video into 4-second segments
-        echo "${segment_time}"
         ffmpeg -i "$input_file" -c:v libx264 -b:v "$bitrate" -g $segment_time -force_key_frames "expr:gte(t, n_forced * $segment_time)" -segment_time $segment_time -f segment -reset_timestamps 1 "$segment_file"
-
-        segment_sizes_file="${tmp_dir}/br-${bitrate}/${bitrate}_segment_sizes.txt"
-        rm $segment_sizes_file
 
         # Save the segment sizes into a text file
         for file in $tmp_dir/br-$bitrate/chunk_*.mp4; do
             size=$(ffprobe -v error -select_streams v:0 -show_entries format=size -of default=noprint_wrappers=1:nokey=1 "$file")
             echo "$size" >> $segment_sizes_file
         done
-    done
+    fi
 
-    echo "Successfully retrieved chunk sizes for each bitrate."
+    echo "Successfully retrieved chunk sizes for bitrate ${bitrate}."
 }
 
 
@@ -105,5 +97,9 @@ save_chunk_sizes () {
 }
 
 # split_original_video
-get_chunk_sizes
-# save_chunk_sizes
+
+for bitrate in "${bitrates[@]}"; do
+    get_chunk_sizes "$bitrate"
+done
+
+save_chunk_sizes
