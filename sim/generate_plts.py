@@ -18,8 +18,15 @@ def qoe_plot(result_dir, qoes):
     rps = [qoe[1] for qoe in qoes]
     sps = [qoe[2] for qoe in qoes]
     net_qoes = [qoe[3] for qoe in qoes]
+    ssims = [qoe[-1] for qoe in qoes]
+    
+    def movingaverage(interval, window_size):
+        window = np.ones(int(window_size))/float(window_size)
+        return np.convolve(interval, window, 'same')
+    
+    ssim_avg = movingaverage(ssims, 10)
 
-    f, axarr = plt.subplots(2, 2, sharex=True)
+    f, axarr = plt.subplots(3, 2, sharex=True)
     ax1 = axarr[0][0]
     ax1.plot(pqs)
     ax1.set_xlabel("Chunk number")
@@ -40,6 +47,12 @@ def qoe_plot(result_dir, qoes):
     ax4.plot(net_qoes)
     ax4.set_xlabel("Chunk number")
     ax4.set_ylabel("Net QOE")
+    
+    ax4 = axarr[2][0]
+    ax4.plot(ssims)
+    ax4.set_xlabel("Chunk number")
+    ax4.set_ylabel("SSIM")
+    ax4.plot(ssim_avg)
 
     plt.tight_layout()
     plt.savefig(os.path.join(result_dir, "qoe_plot.png"))
