@@ -8,3 +8,5 @@ real/data/*.y4m
 real/data/tmp/
 real/data/videos/*/*.mp4
 results/
+
+*.mp4

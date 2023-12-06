@@ -50,7 +50,8 @@ class Video(object):
     # return valid chunk sizes drawn from the trace in a loop until this length
     # is reached.
     def set_max_chunks(self, n):
-        self.max_video_chunks = n
+        if n >= 0:
+            self.max_video_chunks = n
 
     # The length of the original video barring relooping
     def num_chunks(self):

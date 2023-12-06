@@ -252,8 +252,8 @@ class Env:
 
   def log_qoe(self, fname=None):
     ret = ''
-    for qoe_qual, rp, sp, qoe, ssim in self.get_qoes():
-      ret += '%f %f %f %f %f\n' % (qoe_qual, rp, sp, qoe, ssim)
+    for bitrate, (qoe_qual, rp, sp, qoe, ssim) in zip(self.get_bitrates(), self.get_qoes()):
+      ret += '%f %f %f %f %f %.0f\n' % (qoe_qual, rp, sp, qoe, ssim, bitrate)
 
     if fname is not None:
       with open(fname, 'w') as f:

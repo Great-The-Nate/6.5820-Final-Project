@@ -6,4 +6,12 @@ python3 scripts/run_exps.py --name=avg_1Mbps_abr --trace_set=hsdpa --n_train_run
 # Video: livestream
 # Trace: Verizon1
 # Algorithm: bba
-python3 sim/run_exp.py -- --video=real/data/videos/livestream/video.dat --mm-trace=network/traces/cellular/Verizon1.dat --results-dir=results/bba_test --bba
+# Max chunks: No limit
+python3 sim/run_exp.py -- --video=real/data/videos/livestream/video.dat --mm-trace=network/traces/cellular/Verizon1.dat --results-dir=results/bba_test --max-chunks=-1 --bba
+
+# Runs experiment:
+# Video: livestream
+# Trace: Verizon1
+# Algorithm: bola
+# Max chunks: No limit
+python3 sim/run_exp.py -- --video=real/data/videos/livestream/video.dat --mm-trace=network/traces/cellular/Verizon1.dat --results-dir=results/bola_test --max-chunks=-1 --bola
