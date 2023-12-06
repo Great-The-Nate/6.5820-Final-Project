@@ -15,7 +15,7 @@ KILO = 1e3
 class ChunkStats:
 
   def __init__(self, idx, quality, chunk_size, rebuf_sec, ttd, qoe_qual, rp,
-               sp, qoe):
+               sp, qoe, ssim):
     self.idx = idx
     self.quality = quality
     self.chunk_size = chunk_size
@@ -25,6 +25,7 @@ class ChunkStats:
     self.sp = sp
     self.qoe = qoe
     self.ttd = ttd
+    self.ssim = ssim
 
   def get_download_rate_kbps(self):
     return self.chunk_size / self.ttd * BITS_IN_BYTE / KILO
@@ -45,7 +46,7 @@ class Env:
     self.vid_chunk_idx = 0
     self.total_qoe = 0
     self.prev_quality = None
-    self.chunk_stats = []
+    self.chunk_stats: list[ChunkStats] = []
 
   def _validate_action(self, act):
     assert isinstance(act, int)
@@ -209,7 +210,7 @@ class Env:
     self.prev_quality = quality
 
     cs = ChunkStats(self.vid_chunk_idx, quality, chunk_size_bytes, rebuf_sec,
-                    ttd, qoe_qual, rp, sp, qoe)
+                    ttd, qoe_qual, rp, sp, qoe, ssim)
     self.chunk_stats.append(cs)
     return ttd, rebuf_sec, sp, download_rate_kbps
 
@@ -247,15 +248,12 @@ class Env:
     return qqas, rpas, spas, qoeas
 
   def get_qoes(self):
-    qoes = []
-    for cs in self.chunk_stats:
-      qoes.append([cs.qoe_qual, cs.rp, cs.sp, cs.qoe])
-    return qoes
+    return [[cs.qoe_qual, cs.rp, cs.sp, cs.qoe, cs.ssim] for cs in self.chunk_stats]
 
   def log_qoe(self, fname=None):
     ret = ''
-    for qoe_qual, rp, sp, qoe in self.get_qoes():
-      ret += '%f %f %f %f\n' % (qoe_qual, rp, sp, qoe)
+    for qoe_qual, rp, sp, qoe, ssim in self.get_qoes():
+      ret += '%f %f %f %f %f\n' % (qoe_qual, rp, sp, qoe, ssim)
 
     if fname is not None:
       with open(fname, 'w') as f:
