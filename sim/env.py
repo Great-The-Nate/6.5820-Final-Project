@@ -195,12 +195,15 @@ class Env:
 
   def generate_chunk_stats(self, quality, ttd, rebuf_sec, chunk_size_bytes, download_rate_kbps):
     if self.vid_chunk_idx == 0:
-      qoe_qual, rp, sp, qoe = self.obj.detailed_qoe_first_chunk(
+      qoe_qual, rp, sp, qoe, ssim = self.obj.detailed_qoe_first_chunk(
           self.vid.quality_to_bitrate(quality), ttd)
     else:
-      qoe_qual, rp, sp, qoe = self.obj.detailed_qoe(
+      qoe_qual, rp, sp, qoe, ssim = self.obj.detailed_qoe(
           self.vid.quality_to_bitrate(quality),
-          self.vid.quality_to_bitrate(self.prev_quality), rebuf_sec)
+          self.vid.quality_to_bitrate(self.prev_quality),
+          rebuf_sec,
+          self.vid_chunk_idx,
+        )
 
     self.total_qoe += qoe
     self.prev_quality = quality
