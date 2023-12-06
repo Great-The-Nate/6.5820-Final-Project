@@ -7,6 +7,9 @@ To run the batched mode experiment using rescaled 1Mbps hsdpa traces with bba, r
 
 If you want to run bola or tb, replace `--bba` with `--bola` or `--tb` respectively.
 
+### Retransmission enabled throughput based ABR
+Run `python3 scripts/run_exps.py --name=avg_1Mbps_abr --trace_set=hsdpa --n_train_runs=8 --n_test_runs=8 --results_dir=results/ --tb --rt  --target_thr=10.0`.
+
 # ABR Algorithms
 
 ## Description

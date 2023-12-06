@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser()
+# parser = argparse.ArgumentParser()
 
 
 class AbrAlg:
@@ -11,13 +11,7 @@ class AbrAlg:
         # Use parameters from self.args to define your abr algorithm.
         self.vid = vid
         self.obj = obj
-        self.args = parser.parse_args(cmdline_args)
-
-        self.b_max = 40.0
-        self.b1 = (
-            90.0 / 240.0
-        ) * self.b_max  # In the paper the b_1 was set 90s with 240s buffer capacity.
-        self.b_m = 0.9 * self.b_max
+        # self.args = parser.parse_args(cmdline_args)
 
         self.prev_rates = []
 
@@ -25,6 +19,12 @@ class AbrAlg:
         
         # rebuffer aware
         self.rebuffer_react_chunks = 0
+    
+    def estimate_throughput(self):
+        """Harmonic mean of the previous download rates."""
+        return len(self.prev_rates) / np.sum(
+            1.0 / np.array(self.prev_rates)
+        )
 
     def next_quality(self, chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec):
         """
@@ -48,29 +48,22 @@ class AbrAlg:
             buffer_sec = 0
         """
         if download_rate_kbps is None:
-            return [0]
+            return 0
         # Update previous rates
         if len(self.prev_rates) == 8:
             self.prev_rates.pop(0)
         self.prev_rates.append(download_rate_kbps)
         # quick start
-        if chunk_index < 3:
-            return [0]
+        # if chunk_index < 3:
+        #     return 0
         # throughput estimation
-        harmonic_mean_rate = len(self.prev_rates) / np.sum(
-            1.0 / np.array(self.prev_rates)
-        )
+        throughput = self.estimate_throughput()
 
         next_bitrate = 0
         for i, bitrate in enumerate(self.vid.get_bitrates()):
-            if bitrate > harmonic_mean_rate:
+            if bitrate > throughput:
                 break
             next_bitrate = bitrate
-
-        if buffer_sec < self.b1:  # reservoir
-            next_bitrate = next_bitrate * 0.8
-        elif buffer_sec > self.b_m:  # upper reservoir
-            next_bitrate = next_bitrate * 1.2
 
         if rebuffer_sec is not None and rebuffer_sec > 0:
             print(f"rebuffer_sec: {rebuffer_sec}, chunk_index: {chunk_index}")
@@ -88,15 +81,11 @@ class AbrAlg:
             else:
                 next_bitrate = next_bitrate * 0.9
 
-        # quality end
-        if self.vid.num_max_chunks() - chunk_index < 8 and buffer_sec > self.b_m * 1.5:
-            next_bitrate = next_bitrate * 1.3
-
         # Find the highest bitrate less than the estimatiton
         bitrate_index = 0
         for i, bitrate in enumerate(self.vid.get_bitrates()):
             if bitrate > next_bitrate:
                 break
-            bitrate_index = i
+            bitrate_index = max(i, 0)
 
-        return list(set([0, bitrate_index]))
+        return bitrate_index

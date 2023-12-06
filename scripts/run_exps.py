@@ -22,6 +22,7 @@ parser.add_argument('--live-delay', type=int, default=0)
 parser.add_argument('--bba', action='store_true')
 parser.add_argument('--bola', action='store_true')
 parser.add_argument('--tb', action='store_true')
+parser.add_argument('--rt', action='store_true') # retransmission enabled
 parser.add_argument('--target_thr', type=float, default=0.0)
 # INSTRUCTOR ONLY ARGS
 parser.add_argument('--instructor-mpc', action='store_true')
@@ -76,6 +77,10 @@ def cmd_gen(trace, start_index, results_dir):
     additional_args += ' --bola'
   elif args.tb:
     additional_args += ' --tb'
+  if args.rt:
+    return 'python3 sim/run_exp_rt.py -- --mm-trace=%s --results-dir=%s --mm-start-idx=%d %s %s' % (
+      trace, results_dir, start_index, additional_args,
+      ' '.join(remaining_args))
   return 'python3 sim/run_exp.py -- --mm-trace=%s --results-dir=%s --mm-start-idx=%d %s %s' % (
       trace, results_dir, start_index, additional_args,
       ' '.join(remaining_args))
