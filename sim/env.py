@@ -73,7 +73,7 @@ class Env:
     # Decide to use smaller or larger bitrate based on if the larger bitrate downloads in time
     # And set/reset network index accordingly
     self.net.set_packet_idx(prior_net_idx)
-    if ttd_smaller + ttd_larger < self.CHUNK_DUR:
+    if ttd_smaller + ttd_larger < self.buffer:
       ttd = ttd_smaller + ttd_larger
       chunk_size_bytes = smaller_chunk_size_bytes + larger_chunk_size_bytes
       quality = higherQual
@@ -111,7 +111,87 @@ class Env:
       self.buffer -= (self.CHUNK_DUR - self.availableSeconds)
       self.availableSeconds = self.CHUNK_DUR
     
+    step_stats = self.generate_chunk_stats(quality, ttd, rebuf_sec, chunk_size_bytes, download_rate_kbps)
+    self.vid_chunk_idx += 1
+    return step_stats
 
+  
+  def rt_step(self, quality):
+    """Environment step function used when using a retransmission based algorithm."""
+    self._validate_action(quality)
+
+    chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, quality)  # in Mb
+    chunk_size_bytes = chunk_size * MEGA / BITS_IN_BYTE
+    ttd = self.net.ttd(chunk_size_bytes)
+
+    if ttd == 0:
+      # because of the nature of mahimahi simulation sometime we can have
+      # instantaneous bursts and if abr chooses low bitrates then a chunk
+      # can be downloaded in a single burst resulting in ttd = 0
+      # This is rare but if it happens instead of leading to a ZeroDivisionError
+      # we give a high download_rate instead.
+      download_rate_kbps = 100 * 1000  # 100 Mbps
+      ttd = chunk_size_bytes / download_rate_kbps * BITS_IN_BYTE / KILO
+    else:
+      download_rate_kbps = chunk_size_bytes / ttd * BITS_IN_BYTE / KILO
+
+    rebuf_sec = max(0, ttd - self.buffer)
+    self.live_delay += rebuf_sec
+    self.availableSeconds += ttd - self.CHUNK_DUR
+    
+    self.buffer = max(0, self.buffer - ttd)
+    self.buffer += self.CHUNK_DUR
+
+    return ttd, quality, rebuf_sec, chunk_size_bytes, download_rate_kbps
+
+
+  def rt_retransmit(self, rt_quality, orig_ttd, orig_quality, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate):
+    """
+    Used by a retransmit algorithm to update the environment according to the decision of retransmiting
+    a chunk at a different bitrate.
+    """
+    retransmitted = False
+    if rt_quality:
+      self._validate_action(rt_quality)
+
+      prior_net_idx = self.net.idx
+      rt_chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, rt_quality)  # in Mb
+      rt_chunk_size_bytes = rt_chunk_size * MEGA / BITS_IN_BYTE
+      rt_ttd = self.net.ttd(rt_chunk_size_bytes)
+
+      self.net.set_packet_idx(prior_net_idx)
+      if rt_ttd <= self.buffer:
+        # Only complete retransmit if it finishes in time
+        _ = self.net.ttd(rt_chunk_size_bytes)
+
+        if rt_ttd == 0:
+          rt_download_rate_kbps = 100 * 1000  # 100 Mbps
+          rt_ttd = rt_chunk_size_bytes / rt_download_rate_kbps * BITS_IN_BYTE / KILO
+        else:
+          rt_download_rate_kbps = rt_chunk_size_bytes / rt_ttd * BITS_IN_BYTE / KILO
+
+        self.availableSeconds += rt_ttd
+        self.buffer -= rt_ttd
+
+        retransmitted = True
+
+    # Fast forward environment to the next time a chunk is available
+    if self.availableSeconds < self.CHUNK_DUR:
+      fast_forward_time_sec = self.CHUNK_DUR - self.availableSeconds
+      self.net.bytes_downloadable(fast_forward_time_sec)
+      self.buffer -= fast_forward_time_sec
+      self.availableSeconds = self.CHUNK_DUR
+
+    if retransmitted:
+      step_stats = self.generate_chunk_stats(rt_quality, rt_ttd, 0, rt_chunk_size_bytes, rt_download_rate_kbps)
+    else:
+      step_stats = self.generate_chunk_stats(orig_quality, orig_ttd, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate)
+
+    self.vid_chunk_idx += 1
+    return step_stats
+
+
+  def generate_chunk_stats(self, quality, ttd, rebuf_sec, chunk_size_bytes, download_rate_kbps):
     if self.vid_chunk_idx == 0:
       qoe_qual, rp, sp, qoe = self.obj.detailed_qoe_first_chunk(
           self.vid.quality_to_bitrate(quality), ttd)
@@ -126,13 +206,10 @@ class Env:
     cs = ChunkStats(self.vid_chunk_idx, quality, chunk_size_bytes, rebuf_sec,
                     ttd, qoe_qual, rp, sp, qoe)
     self.chunk_stats.append(cs)
-
-    self.vid_chunk_idx += 1
-
     return ttd, rebuf_sec, sp, download_rate_kbps
 
-  # returns in seconds
   def get_buffer_size(self):
+    # returns in seconds
     return self.buffer
 
   def get_total_qoe(self):
@@ -145,11 +222,10 @@ class Env:
     l = [cs.get_download_rate_kbps() for cs in self.chunk_stats]
     return np.mean(l)
 
-  '''
-      split num chunks into nparts and report avg qoe stats over each part
-  '''
-
   def get_avg_qoe_breakdown(self, n_parts=1):
+    '''
+    Split num chunks into nparts and report avg qoe stats over each part
+    '''
     N = len(self.chunk_stats)
     qqas, rpas, spas, qoeas = [], [], [], []
     for l in np.array_split(self.chunk_stats, n_parts):

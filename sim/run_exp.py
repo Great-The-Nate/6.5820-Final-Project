@@ -140,8 +140,7 @@ def main(argv):
     total_rebuf_sec = 0
     rebuf_sec = None
     prev_chunk_rate = None
-    buff = env.get_buffer_size()
-    buff_lens = [buff]
+    buff_lens = [env.get_buffer_size()]
     ttds = []
 
     for i in range(vid.num_max_chunks()):
@@ -149,19 +148,34 @@ def main(argv):
             "chunk_index": i,
             "rebuffer_sec": rebuf_sec,
             "download_rate_kbps": prev_chunk_rate,
-            "buffer_sec": buff,
+            "buffer_sec": env.get_buffer_size()
         }
 
         bitrateQualities = abr_alg.next_quality(**feedback)
         
-        ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.step(bitrateQualities)
-
-        buff = env.get_buffer_size()
+        if not args.rt:
+            ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.step(bitrateQualities)
+        else:
+            orig_ttd, orig_quality, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate = env.rt_step(bitrateQualities)
+            rt_feedback = {
+                "chunk_index": i,
+                # Use rebuffering from prev download not this download since a retransmit chunk 
+                # isn't allowed to rebuffer
+                "rebuffer_sec": rebuf_sec, 
+                "download_rate_kbps": orig_download_rate,
+                "buffer_sec": env.get_buffer_size(),
+                "chunk_download_time": orig_ttd,
+                "live_delay": env.live_delay
+            }
+            rt_quality = None if rebuf_sec else abr_alg.try_retransmit(**rt_feedback)
+            
+            ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.rt_retransmit(
+                rt_quality, orig_ttd, orig_quality, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate
+            )
 
         if i > 0:
             total_rebuf_sec += rebuf_sec
-
-        buff_lens.append(buff)
+        buff_lens.append(env.get_buffer_size())
         ttds.append(ttd)
 
     tot_qoe = env.get_total_qoe()

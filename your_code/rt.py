@@ -17,7 +17,7 @@ class AbrAlg:
             buffer_sec (float): The size of the client's playback buffer (in seconds)
 
         Returns:
-            list: A list containing either one or two quality that the chunk_index should be downloaded at.
+            int: An int of the quality that the chunk_index should be downloaded at.
 
         Note:
             Please note that for the first chunk when there is no network feedback yet
@@ -27,14 +27,14 @@ class AbrAlg:
             download_rate_kbps = None
             buffer_sec = 0
         """
-        qualities = [0]
-
-        return qualities
+        quality = 0
+        return quality
     
-    def retransmit(self, chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec):
+    def try_retransmit(self, chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec, chunk_download_time, live_delay):
         """
         Called after the initially decided bitrate for a chunk is downloaded to see if a higher bitrate
         should be retransmited for that chunk instead.
+        Only called if the original download didn't rebuffer.
 
         Args:
             chunk_index (int)
