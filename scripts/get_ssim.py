@@ -54,6 +54,7 @@ def load_original_frames() -> dict[int, dict[int, ImageType]]:
 
     return original_frames
 
+save_original_frames()
 
 original_frames = load_original_frames()
 print(

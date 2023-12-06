@@ -1,7 +1,9 @@
 import copy
 
 import numpy as np
-from network import Network
+from .network import Network
+from ..your_code.objective import Objective
+from ..your_code.video import Video
 
 MEGA = 1e6
 BITS_IN_BYTE = 8
@@ -30,7 +32,7 @@ class ChunkStats:
 
 class Env:
 
-  def __init__(self, vid, obj, net, cmdline_args):
+  def __init__(self, vid: Video, obj: Objective, net: Network, cmdline_args):
     self.vid = copy.deepcopy(vid)
     self.obj = copy.deepcopy(obj)
     self.n_bitrates = vid.num_bitrates()

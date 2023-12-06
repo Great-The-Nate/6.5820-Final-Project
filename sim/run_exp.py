@@ -119,8 +119,8 @@ def main(argv):
     net = network.Network(args.mm_trace, args.mm_start_idx)
     env = Env(vid, obj, net, args)
 
-    obj_client = copy.deepcopy(obj)
-    vid_client = copy.deepcopy(vid)
+    objective_client = copy.deepcopy(obj)
+    video_client = copy.deepcopy(vid)
     
     # Updated to use differnt algorithms by adding flags
     if args.bba:
@@ -135,7 +135,7 @@ def main(argv):
     elif args.rt:
         from your_code.rt import AbrAlg
         abr_alg_fn = AbrAlg
-    abr_alg = abr_alg_fn(vid_client, obj_client, args)
+    abr_alg = abr_alg_fn(video_client, objective_client, args)
 
     total_rebuf_sec = 0
     rebuf_sec = None

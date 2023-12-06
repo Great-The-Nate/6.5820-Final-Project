@@ -13,8 +13,8 @@ output_file=real/data/videos/livestream/video.dat
 tmp_dir=real/data/tmp
 segment_time=4
 
-bitrates=("44k")
-# bitrates=("44k" "86k" "125k" "173k" "212k" "249k" "315k" "369k" "497k" "564k" "764k" "985k" "1178k" "1439k" "2038k" "2353k" "2875k" "3529k" "3844k")
+# bitrates=("3844k")
+bitrates=("44k" "86k" "125k" "173k" "212k" "249k" "315k" "369k" "497k" "564k" "764k" "985k" "1178k" "1439k" "2038k" "2353k" "2875k" "3529k" "3844k")
 
 mkdir "$tmp_dir"
 
@@ -60,7 +60,7 @@ get_chunk_sizes () {
 
         # Split the encoded video into 4-second segments
         echo "${segment_time}"
-        ffmpeg -i "$encoded_video" -c:v libx264 -sc_threshold 0 -g $segment_time -force_key_frames "expr:gte(t, n_forced * $segment_time)" -segment_time $segment_time -f segment -reset_timestamps 1 "$segment_file"
+        ffmpeg -i "$input_file" -c:v libx264 -b:v "$bitrate" -g $segment_time -force_key_frames "expr:gte(t, n_forced * $segment_time)" -segment_time $segment_time -f segment -reset_timestamps 1 "$segment_file"
 
         segment_sizes_file="${tmp_dir}/br-${bitrate}/${bitrate}_segment_sizes.txt"
         rm $segment_sizes_file
@@ -95,7 +95,8 @@ save_chunk_sizes () {
         echo "$element"
     done
 
-    printf "size %s\nbitrates " "${segment_time}" > "$output_file"
+    segment_time_ms=$(($segment_time*1000))
+    printf "size %s\nbitrates " "${segment_time_ms}" > "$output_file"
     printf "%s\t" "${bitrates[@]}" >> "$output_file"
     printf "\n" >> "$output_file"
     paste -d '\t' "${chunk_sizes_files[@]}" >> "$output_file"
@@ -105,4 +106,4 @@ save_chunk_sizes () {
 
 # split_original_video
 get_chunk_sizes
-save_chunk_sizes
+# save_chunk_sizes
