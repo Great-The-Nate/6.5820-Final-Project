@@ -135,6 +135,10 @@ def main(argv):
     elif args.rt:
         from your_code.rt import AbrAlg
         abr_alg_fn = AbrAlg
+    else:
+        # Default to BBA
+        from your_code.bba import AbrAlg        
+        abr_alg_fn = AbrAlg
     abr_alg = abr_alg_fn(video_client, objective_client, args)
 
     total_rebuf_sec = 0

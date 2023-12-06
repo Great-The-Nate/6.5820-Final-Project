@@ -1,9 +1,9 @@
 import copy
 
 import numpy as np
-from .network import Network
-from ..your_code.objective import Objective
-from ..your_code.video import Video
+from sim.network import Network
+from your_code.objective import Objective
+from your_code.video import Video
 
 MEGA = 1e6
 BITS_IN_BYTE = 8
