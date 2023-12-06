@@ -14,7 +14,6 @@ class AbrAlg:
             90.0 / 240.0
         ) * self.b_max  # In the paper the b_1 was set 90s with 240s buffer capacity.
         self.b_m = 0.9 * self.b_max
-        print(cmdline_args)
 
         self.num_bitrates = len(self.vid.get_bitrates())
 
