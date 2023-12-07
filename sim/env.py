@@ -233,19 +233,22 @@ class Env:
     Split num chunks into nparts and report avg qoe stats over each part
     '''
     N = len(self.chunk_stats)
-    qqas, rpas, spas, qoeas = [], [], [], []
+    qqas, rpas, spas, qoeas, ssims = [], [], [], [], []
     for l in np.array_split(self.chunk_stats, n_parts):
+      l: list[ChunkStats]
       qoe_qual_avg = np.mean([cs.qoe_qual for cs in l])
       rp_avg = np.mean([cs.rp for cs in l])
       sp_avg = np.mean([cs.sp for cs in l])
       qoe_avg = np.mean([cs.qoe for cs in l])
+      ssim_avg = np.mean([cs.ssim for cs in l])
 
       qqas.append(qoe_qual_avg)
       rpas.append(rp_avg)
       spas.append(sp_avg)
       qoeas.append(qoe_avg)
+      ssims.append(ssim_avg)
 
-    return qqas, rpas, spas, qoeas
+    return qqas, rpas, spas, qoeas, ssims
 
   def get_qoes(self):
     return [[cs.qoe_qual, cs.rp, cs.sp, cs.qoe, cs.ssim] for cs in self.chunk_stats]

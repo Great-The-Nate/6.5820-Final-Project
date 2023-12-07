@@ -213,13 +213,14 @@ def main(argv):
         env.log_qoe(os.path.join(args.results_dir, "qoe.txt"))
 
     with open(os.path.join(args.results_dir, "results.json"), "w") as f:
-        (qual,), (rp,), (sp,), (qoe,) = env.get_avg_qoe_breakdown(1)
+        (qual,), (rp,), (sp,), (qoe,), (ssim, ) = env.get_avg_qoe_breakdown(1)
         json.dump(
             dict(
                 avg_quality_score=qual,
                 avg_rebuf_penalty=rp,
                 avg_smoothness_penalty=sp,
                 avg_net_qoe=qoe,
+                avg_ssim=ssim,
             ),
             f,
             indent=4,

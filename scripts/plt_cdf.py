@@ -27,9 +27,9 @@ def plot_cdf(ax, vals, label=''):
 def main():
   runs = sorted(args.runs)
   for mode in ['train', 'test']:
-    f, axarr = plt.subplots(2, 2)
+    f, axarr = plt.subplots(3, 2)
     for run in runs:
-      rebufs, smooths, qualities, qoes = [], [], [], []
+      rebufs, smooths, qualities, qoes, ssims = [], [], [], [], []
       d = os.path.join(args.results_dir, run, mode)
       for fname in os.listdir(d):
         with open(os.path.join(d, fname, 'results.json')) as f:
@@ -38,6 +38,7 @@ def main():
         smooths.append(j['avg_smoothness_penalty'])
         qualities.append(j['avg_quality_score'])
         qoes.append(j['avg_net_qoe'])
+        ssims.append(j['avg_ssim'])
 
       plot_cdf(axarr[0][0], qualities, label=run)
       axarr[0][0].set_xlabel('quality score')
@@ -47,6 +48,8 @@ def main():
       axarr[1][0].set_xlabel('smooth penalty')
       plot_cdf(axarr[1][1], qoes, label=run)
       axarr[1][1].set_xlabel('net qoe')
+      plot_cdf(axarr[2][0], ssims, label=run)
+      axarr[2][0].set_xlabel('avg ssim')
 
     plt.tight_layout()
     utils.mkdir_if_not_exists(os.path.join(OUT_DIR, '_'.join(runs)))
