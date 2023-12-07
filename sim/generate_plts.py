@@ -13,17 +13,44 @@ MILLI = 1e-3
 KILO = 1e3
 
 
+def ssim_bitrate_comparison(result_dir, bitrates, qoes):
+    ssims = [qoe[-1] for qoe in qoes]
+
+    def movingaverage(interval, window_size):
+        window = np.ones(int(window_size)) / float(window_size)
+        return np.convolve(interval, window, "same")
+
+    ssim_avg = movingaverage(ssims, 10)
+
+    f, axarr = plt.subplots(2, 1, sharex=True)
+    
+    
+    ax1 = axarr[0]
+    ax1.plot(bitrates, color="red")
+    ax1.set_ylabel("Bitrate (kbps)")
+    ax1.title.set_text("Example bitrate and SSIM metrics over live video")
+    root_ax = ax1
+
+    ax2 = axarr[1]
+    ax2.plot(ssims, color="red")
+    ax2.plot(ssim_avg, color="orange")
+    ax2.set_xlabel("Chunk")
+    ax2.set_ylabel("SSIM")
+
+    plt.savefig(os.path.join(result_dir, "ssim_qoe_plot.png"))
+
+
 def qoe_plot(result_dir, qoes):
     pqs = [qoe[0] for qoe in qoes]
     rps = [qoe[1] for qoe in qoes]
     sps = [qoe[2] for qoe in qoes]
     net_qoes = [qoe[3] for qoe in qoes]
     ssims = [qoe[-1] for qoe in qoes]
-    
+
     def movingaverage(interval, window_size):
-        window = np.ones(int(window_size))/float(window_size)
-        return np.convolve(interval, window, 'same')
-    
+        window = np.ones(int(window_size)) / float(window_size)
+        return np.convolve(interval, window, "same")
+
     ssim_avg = movingaverage(ssims, 10)
 
     f, axarr = plt.subplots(3, 2, sharex=True)
@@ -47,7 +74,7 @@ def qoe_plot(result_dir, qoes):
     ax4.plot(net_qoes)
     ax4.set_xlabel("Chunk number")
     ax4.set_ylabel("Net QOE")
-    
+
     ax4 = axarr[2][0]
     ax4.plot(ssims)
     ax4.set_xlabel("Chunk number")
@@ -160,6 +187,7 @@ def plt_bitrates(ax, bitrates, ttds):
     ax.set_xlabel("Time (sec)")
     ax.set_ylabel("Bitrate (Kbps)")
 
+
 def plt_ssim(ax, ssims, ttds):
     xs = []
     ys = []
@@ -176,6 +204,86 @@ def plt_ssim(ax, ssims, ttds):
     ax.set_xlabel("Time (sec)")
     ax.set_ylabel("SSIM")
 
+
+def plot_mahimahi_trace(result_dir, trace_file, start_idx, total_time, N=10):
+    trace = []
+    with open(trace_file, "r") as f:
+        for line in f:
+            time_stamp = int(line.split()[0])
+            trace.append(int(line.split()[0]))
+
+    start_t = trace[start_idx]
+    trace_np = np.int32(trace)
+
+    while (trace[-1] - start_t) * MILLI < total_time:
+        trace.extend(trace_np + trace[-1])
+
+    trace = trace[start_idx:]
+    trace = np.int32(trace) - trace[0]
+
+    filtered_trace = []
+    for t in trace:
+        if t * MILLI <= total_time:
+            filtered_trace.append(t)
+
+    trace = filtered_trace
+
+    time_all = []
+    packet_sent_all = []
+    last_time_stamp = 0
+    packet_sent = 0
+
+    for time_stamp in trace:
+        if time_stamp == last_time_stamp:
+            packet_sent += 1
+            continue
+        else:
+            time_all.append(last_time_stamp)
+            packet_sent_all.append(packet_sent)
+            packet_sent = 1
+            last_time_stamp = time_stamp
+
+    time_window = np.array(time_all[1:]) - np.array(time_all[:-1])
+    throuput_all = (
+        MTU * BITS_IN_BYTE * np.array(packet_sent_all[1:]) / time_window * KILO / MEGA
+    )
+
+    x = np.array(time_all[1:]) * MILLI
+    y = throuput_all
+
+    def running_mean(x, N):
+        cumsum = np.cumsum(np.insert(x, 0, 0))
+        return (cumsum[N:] - cumsum[:-N]) / float(N)
+
+    x_mean = running_mean(x, N)[::N]
+    y_mean = running_mean(y, N)[::N]
+
+    
+    ax1 = plt.subplot()
+
+    # Plot the line on the first subplot
+    ax1.plot(x_mean, y_mean, label='Capacity')
+    ax1.set_xlabel('Time (s)')
+    ax1.set_ylabel('Link Capacity (Mbps)')
+    ax1.set_title('Example Mahimahi Network Trace')
+
+    # Calculate the average y value
+    average_y = np.mean(y_mean)
+
+    # Overlay a horizontal dashed line at the average y value on the second subplot
+    ax1.axhline(y=average_y, color='red', linestyle='--', label="Average: %.3f Mbps" % average_y)
+
+    ax1.legend()
+    
+    # Adjust layout to prevent overlap
+    plt.tight_layout()
+    
+    # plt.title("Example Mahimahi Network Trace")
+    # plt.plot(x_mean, y_mean, label="Throughput (Mean: %.3f Mbps)" % np.mean(y_mean))
+    # plt.xlabel("Time (sec)")
+    # plt.ylabel("link Capacity (Mbps)")
+    plt.savefig(os.path.join(result_dir, "mahimahi_plot.png"))
+    
 
 def plt_time_components(
     result_dir, bitrates, qoes, buffer_lengths, ttds, trace_file, start_idx
@@ -200,3 +308,5 @@ def generate_plts(
     plt_time_components(
         result_dir, bitrates, qoes, buffer_lengths, ttds, trace_file, start_idx
     )
+    # ssim_bitrate_comparison(result_dir, bitrates, qoes)
+    # plot_mahimahi_trace(result_dir, trace_file, start_idx, sum(ttds))
