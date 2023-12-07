@@ -72,6 +72,11 @@ parser.add_argument(
         the chunk size (e.g. for a fully live stream with 4 second chunks there is a implied minimum \
         delay of 4 seconds but live-delay would be 0)."
 )
+parser.add_argument(
+    "--single-quality",
+    action="store_true",
+    help="If set, the client will not download two qualities for a chunk."
+)
 
 # use buffer based algorithm: BBA0
 parser.add_argument('--bba', action='store_true')
@@ -158,6 +163,8 @@ def main(argv):
         bitrateQualities = abr_alg.next_quality(**feedback)
         
         if not args.rt:
+            if args.single_quality:
+                bitrateQualities = [max(bitrateQualities)]
             ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.step(bitrateQualities)
         else:
             orig_ttd, orig_quality, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate = env.rt_step(max(bitrateQualities))

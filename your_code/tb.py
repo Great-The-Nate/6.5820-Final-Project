@@ -1,7 +1,7 @@
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser()
+# parser = argparse.ArgumentParser()
 
 
 class AbrAlg:
@@ -11,7 +11,7 @@ class AbrAlg:
         # Use parameters from self.args to define your abr algorithm.
         self.vid = vid
         self.obj = obj
-        self.args = parser.parse_args(cmdline_args)
+        # self.args = parser.parse_args(cmdline_args)
 
         self.b_max = 40.0
         self.b1 = (

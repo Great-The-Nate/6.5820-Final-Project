@@ -57,6 +57,9 @@ class Env:
     """The primary step function simulating video streaming."""
     # print(f"Live Delay: {self.live_delay}; Available Seconds: {self.availableSeconds}; Buffer: {self.buffer}")
     # print("Qualities:", qualities)
+    
+    if len(qualities) == 1:
+      return self.single_step(qualities[0])
 
     lowerQual, higherQual = min(qualities), max(qualities)
     self._validate_action(lowerQual)
@@ -117,7 +120,44 @@ class Env:
     step_stats = self.generate_chunk_stats(quality, ttd, rebuf_sec, chunk_size_bytes, download_rate_kbps)
     self.vid_chunk_idx += 1
     return step_stats
+  
+  def single_step(self, quality):
+    self._validate_action(quality)
 
+    chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx,
+                                                 quality)  # in Mb
+
+    chunk_size_bytes = chunk_size * MEGA / BITS_IN_BYTE
+
+    ttd = self.net.ttd(chunk_size_bytes)
+
+    if ttd == 0:
+      # because of the nature of mahimahi simulation sometime we can have
+      # instantaneous bursts and if abr chooses low bitrates then a chunk
+      # can be downloaded in a single burst resulting in ttd = 0
+      # This is rare but if it happens instead of leading to a ZeroDivisionError
+      # we give a high download_rate instead.
+      download_rate_kbps = 100 * 1000  # 100 Mbps
+      ttd = chunk_size_bytes / download_rate_kbps * BITS_IN_BYTE / KILO
+    else:
+      download_rate_kbps = chunk_size_bytes / ttd * BITS_IN_BYTE / KILO
+
+    rebuf_sec = max(0, ttd - self.buffer)
+    self.live_delay += rebuf_sec
+    self.availableSeconds += ttd - self.CHUNK_DUR
+
+    self.buffer = max(0, self.buffer - ttd)
+    self.buffer += self.CHUNK_DUR
+
+    # Fast forward environment to the next time a chunk is available
+    if self.availableSeconds < self.CHUNK_DUR:
+      self.net.bytes_downloadable(self.CHUNK_DUR - self.availableSeconds)
+      self.buffer -= (self.CHUNK_DUR - self.availableSeconds)
+      self.availableSeconds = self.CHUNK_DUR
+    
+    step_stats = self.generate_chunk_stats(quality, ttd, rebuf_sec, chunk_size_bytes, download_rate_kbps)
+    self.vid_chunk_idx += 1
+    return step_stats
   
   def rt_step(self, quality):
     """Environment step function used when using a retransmission based algorithm."""
