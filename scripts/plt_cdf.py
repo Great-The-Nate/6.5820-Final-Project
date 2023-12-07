@@ -20,14 +20,14 @@ OUT_DIR = 'cdfs'
 def plot_cdf(ax, vals, label=''):
   x = sorted(vals)
   y = [i / float(len(vals)) for i in range(len(vals))]
-  ax.plot(x, y, label=label + '(Avg: %.2f)' % np.mean(x))
+  ax.plot(x, y, label=label + '(Mean: %.2f)' % np.mean(x))
   ax.legend()
 
 
 def main():
   runs = sorted(args.runs)
   for mode in ['train', 'test']:
-    f, axarr = plt.subplots(3, 2)
+    f, axarr = plt.subplots(2, 1)
     for run in runs:
       rebufs, smooths, qualities, qoes, ssims = [], [], [], [], []
       d = os.path.join(args.results_dir, run, mode)
@@ -40,16 +40,11 @@ def main():
         qoes.append(j['avg_net_qoe'])
         ssims.append(j['avg_ssim'])
 
-      plot_cdf(axarr[0][0], qualities, label=run)
-      axarr[0][0].set_xlabel('quality score')
-      plot_cdf(axarr[0][1], rebufs, label=run)
-      axarr[0][1].set_xlabel('rebuf penalty')
-      plot_cdf(axarr[1][0], smooths, label=run)
-      axarr[1][0].set_xlabel('smooth penalty')
-      plot_cdf(axarr[1][1], qoes, label=run)
-      axarr[1][1].set_xlabel('net qoe')
-      plot_cdf(axarr[2][0], ssims, label=run)
-      axarr[2][0].set_xlabel('avg ssim')
+      plot_cdf(axarr[0], rebufs, label=run)
+      axarr[0].set_xlabel('Rebuffer penalty')
+      axarr[0].title.set_text("SSIM and Rebuffer Penalty by Algorithm (batched)")
+      plot_cdf(axarr[1], ssims, label=run)
+      axarr[1].set_xlabel('Average SSIM')
 
     plt.tight_layout()
     utils.mkdir_if_not_exists(os.path.join(OUT_DIR, '_'.join(runs)))
