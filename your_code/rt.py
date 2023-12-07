@@ -1,6 +1,13 @@
 import numpy as np
+from your_code.tb import AbrAlg
 
-class AbrAlg:
+MEGA = 1e6
+BITS_IN_BYTE = 8
+MTU = 1500.
+MILLI = 1e-3
+KILO = 1e3
+
+class AbrAlg(AbrAlg):
     # vid is of type video.Video
     # obj is of type objective.Objective
     def __init__(self, vid, obj, cmdline_args):
@@ -27,10 +34,9 @@ class AbrAlg:
             download_rate_kbps = None
             buffer_sec = 0
         """
-        quality = 0
-        return quality
+        super().next_quality(chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec)
     
-    def try_retransmit(self, chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec, chunk_download_time, live_delay):
+    def try_retransmit(self, chunk_index, sent_quality, rebuffer_sec, download_rate_kbps, buffer_sec, chunk_download_time, live_delay):
         """
         Called after the initially decided bitrate for a chunk is downloaded to see if a higher bitrate
         should be retransmited for that chunk instead.
@@ -48,4 +54,16 @@ class AbrAlg:
         Returns:
             int or None: None if no chunk should be retransmitted or, otherwise, the quality to retransmit
         """
+        
+        new_quality = self.next_quality(chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec)
+        
+        if new_quality <= sent_quality:
+            return None
+        
+        chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, new_quality)  # in Mb
+        chunk_size_bytes = chunk_size * MEGA / BITS_IN_BYTE
+        estimate_ttd = chunk_size_bytes / download_rate_kbps * BITS_IN_BYTE / KILO
+        if buffer_sec > 1.5 * estimate_ttd:
+            return new_quality
+
         return None

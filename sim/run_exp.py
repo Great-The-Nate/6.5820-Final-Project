@@ -160,11 +160,12 @@ def main(argv):
         if not args.rt:
             ttd, rebuf_sec, smooth_pen, prev_chunk_rate = env.step(bitrateQualities)
         else:
-            orig_ttd, orig_quality, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate = env.rt_step(bitrateQualities)
+            orig_ttd, orig_quality, orig_rebuf_sec, orig_chunk_size_bytes, orig_download_rate = env.rt_step(max(bitrateQualities))
             rt_feedback = {
                 "chunk_index": i,
                 # Use rebuffering from prev download not this download since a retransmit chunk 
                 # isn't allowed to rebuffer
+                "sent_quality": max(bitrateQualities),
                 "rebuffer_sec": rebuf_sec, 
                 "download_rate_kbps": orig_download_rate,
                 "buffer_sec": env.get_buffer_size(),

@@ -51,17 +51,17 @@ class AbrAlg:
 
         return qualities
 
-    def next_quality(self, chunk_index, rebuffer_sec, download_rate_kbps,
-                   buffer_sec):
-        """
-            Testing purpose, the original BBA0 algorithm that returns the quality in a list.
-        """
-        # print(f"buffer_sec: {buffer_sec}")
-        # print("using bba algorithm")
+    # def next_quality(self, chunk_index, rebuffer_sec, download_rate_kbps,
+    #                buffer_sec):
+    #     """
+    #         Testing purpose, the original BBA0 algorithm that returns the quality in a list.
+    #     """
+    #     # print(f"buffer_sec: {buffer_sec}")
+    #     # print("using bba algorithm")
         
-        if buffer_sec < self.b1: # reservoir
-            return [0]
-        elif buffer_sec > self.b_m: # upper reservoir
-            return [self.num_bitrates - 1]
-        else: # cushion
-            return [round((buffer_sec - self.b1) / (self.b_max - self.b1) * (self.num_bitrates - 1))]
+    #     if buffer_sec < self.b1: # reservoir
+    #         return [0]
+    #     elif buffer_sec > self.b_m: # upper reservoir
+    #         return [self.num_bitrates - 1]
+    #     else: # cushion
+    #         return [round((buffer_sec - self.b1) / (self.b_max - self.b1) * (self.num_bitrates - 1))]
