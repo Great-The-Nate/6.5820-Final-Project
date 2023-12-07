@@ -8,7 +8,7 @@ class AbrAlg:
         # self.args = parser.parse_args(cmdline_args)
         
         # TODO: Need to change these configurations to match the delayed setting.
-        self.b_max = 40.0
+        self.b_max = cmdline_args.live_delay + vid.get_chunk_duration()
         self.b1 = (90.0 / 240.0) * self.b_max # Original b_1 value.
         self.b_m = 0.9 * self.b_max
 
@@ -53,4 +53,4 @@ class AbrAlg:
         """
         # Calculate utility for each bitrate and choose the one with the highest utility.
         utilities = [(self.utility_function(i, buffer_sec, rebuffer_sec) + self.V * self.vid.get_bitrates()[i]) / (self.vid.get_bitrates()[i] + 1) for i in range(self.num_bitrates)]
-        return list(set([0, int(np.argmax(utilities))]))
+        return [3, int(np.argmax(utilities))]

@@ -18,6 +18,12 @@ parser.add_argument('-n', '--name', type=str, required=True)
 parser.add_argument('--results_dir', type=str, default='results/')
 parser.add_argument('--dry_run', action='store_true')
 parser.add_argument('--live-delay', type=int, default=0)
+parser.add_argument(
+    "--video",
+    type=str,
+    default="real/data/videos/BigBuckBunny/trace.dat",
+    help="Root directory of video to play",
+)
 
 parser.add_argument('--bba', action='store_true')
 parser.add_argument('--bola', action='store_true')
