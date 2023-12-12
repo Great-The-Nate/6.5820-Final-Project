@@ -86,6 +86,8 @@ parser.add_argument('--bola', action='store_true')
 parser.add_argument('--tb', action='store_true')
 # use retransmission algorithm
 parser.add_argument('--rt', action='store_true')
+# use conservative bba algorithm
+parser.add_argument('--cbba', action='store_true')
 
 
 logging.set_verbosity(logging.INFO)
@@ -139,6 +141,9 @@ def main(argv):
         abr_alg_fn = AbrAlg
     elif args.rt:
         from your_code.rt import AbrAlg
+        abr_alg_fn = AbrAlg
+    elif args.cbba:
+        from your_code.cbba import AbrAlg
         abr_alg_fn = AbrAlg
     else:
         # Default to BBA

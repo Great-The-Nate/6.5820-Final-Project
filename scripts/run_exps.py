@@ -29,6 +29,7 @@ parser.add_argument('--bba', action='store_true')
 parser.add_argument('--bola', action='store_true')
 parser.add_argument('--tb', action='store_true')
 parser.add_argument('--rt', action='store_true')
+parser.add_argument('--cbba', action='store_true')
 parser.add_argument('--single_quality', action='store_true')
 parser.add_argument('--target_thr', type=float, default=0.0)
 # INSTRUCTOR ONLY ARGS
@@ -84,8 +85,12 @@ def cmd_gen(trace, start_index, results_dir):
     additional_args += ' --bola'
   elif args.tb:
     additional_args += ' --tb'
-  elif args.tb:
+  elif args.rt:
     additional_args += ' --rt'
+  elif args.cbba:
+    additional_args += ' --cbba'
+  
+  additional_args += f" --live-delay={args.live_delay}"
   
   if args.single_quality:
     additional_args += ' --single-quality'
