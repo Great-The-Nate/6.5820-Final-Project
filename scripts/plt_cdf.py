@@ -10,6 +10,8 @@ sys.path.append('./')
 import utils
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--no_title', action='store_true')
+parser.add_argument('--abr', type=str, help='abr algorithm for title')
 parser.add_argument('--runs', required=True, nargs='+', type=str)
 parser.add_argument('--results_dir', type=str, default='results/')
 args = parser.parse_args()
@@ -42,7 +44,12 @@ def main():
 
       plot_cdf(axarr[0], rebufs, label=run)
       axarr[0].set_xlabel('Rebuffer penalty')
-      axarr[0].title.set_text("SSIM and Rebuffer Penalty by Algorithm (batched)")
+      if args.no_title:
+        pass   
+      elif args.abr:
+        axarr[0].title.set_text(f"Single Bitrate vs. Multiple Bitrates using {args.abr} Algorithm")
+      else:
+        axarr[0].title.set_text("SSIM and Rebuffer Penalty by Single or Multiple Bitrates")
       plot_cdf(axarr[1], ssims, label=run)
       axarr[1].set_xlabel('Average SSIM')
 

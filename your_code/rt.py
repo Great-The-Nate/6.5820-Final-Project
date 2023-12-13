@@ -12,8 +12,7 @@ class AbrAlg(AbrAlg):
     # obj is of type objective.Objective
     def __init__(self, vid, obj, cmdline_args):
         # Use parameters from self.args to define your abr algorithm.
-        self.vid = vid
-        self.obj = obj
+        super().__init__(vid, obj, cmdline_args)
 
     def next_quality(self, chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec):
         """
@@ -34,7 +33,7 @@ class AbrAlg(AbrAlg):
             download_rate_kbps = None
             buffer_sec = 0
         """
-        super().next_quality(chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec)
+        return super().next_quality(chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec)
     
     def try_retransmit(self, chunk_index, sent_quality, rebuffer_sec, download_rate_kbps, buffer_sec, chunk_download_time, live_delay):
         """
@@ -55,12 +54,12 @@ class AbrAlg(AbrAlg):
             int or None: None if no chunk should be retransmitted or, otherwise, the quality to retransmit
         """
         
-        new_quality = self.next_quality(chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec)
+        new_quality = max(self.next_quality(chunk_index, rebuffer_sec, download_rate_kbps, buffer_sec))
         
         if new_quality <= sent_quality:
             return None
         
-        chunk_size = self.vid.chunk_size_for_quality(self.vid_chunk_idx, new_quality)  # in Mb
+        chunk_size = self.vid.chunk_size_for_quality(chunk_index, new_quality)  # in Mb
         chunk_size_bytes = chunk_size * MEGA / BITS_IN_BYTE
         estimate_ttd = chunk_size_bytes / download_rate_kbps * BITS_IN_BYTE / KILO
         if buffer_sec > 1.5 * estimate_ttd:
